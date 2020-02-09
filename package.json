@@ -79,7 +79,7 @@
         "react-styleguidist": "7.0.5",
         "regenerator-runtime": "^0.13.2",
         "replace": "^1.1.1",
-        "rimraf": "^2.6.2",
+        "rimraf": "^3.0.2",
         "style-loader": "^0.23.0",
         "stylelint-config-prettier": "^5.0.0",
         "webpack": "^4.25.1"
