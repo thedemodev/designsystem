@@ -1,137 +1,152 @@
-var darkModeEnabled = false;
-var button = document.getElementsByClassName('darkmode-button')[0];
-var checkbox = document.getElementsByClassName('darkmode-button__switch')[0];
+(function() {
+    var darkModeEnabled = false;
+    var button = document.getElementsByClassName('darkmode-button')[0];
+    var checkbox = document.getElementsByClassName(
+        'darkmode-button__switch',
+    )[0];
 
-function isDarkModeSupported() {
-    return window.matchMedia('(prefers-color-scheme)').media !== 'not all';
-}
+    function isDarkModeSupported() {
+        return window.matchMedia('(prefers-color-scheme)').media !== 'not all';
+    }
 
-/*
+    /*
 Loop through all loaded style sheets, and alter the media query condition text that matches `fromText` with `toText`
 Used to change dark mode media query to be applied by changing it from `(prefers-color-scheme: dark)` to `only screen`
  */
-function swapMediaQueryConditionText(fromText, toText) {
-    var sheets = document.styleSheets;
-    for (var sheetIndex = 0; sheetIndex < sheets.length; ++sheetIndex) {
-        var sheet = sheets[sheetIndex];
-        try {
-            var rules = sheet.cssRules || sheet.rules;
-            for (var ruleIndex = 0; ruleIndex < rules.length; ++ruleIndex) {
-                var rule = rules[ruleIndex];
-                if (
-                    rule.media &&
-                    (rule.conditionText === fromText ||
-                        rule.media.mediaText === fromText)
-                ) {
-                    rule.media.mediaText = toText;
+    function swapMediaQueryConditionText(fromText, toText) {
+        var sheets = document.styleSheets;
+        for (var sheetIndex = 0; sheetIndex < sheets.length; ++sheetIndex) {
+            var sheet = sheets[sheetIndex];
+            try {
+                var rules = sheet.cssRules || sheet.rules;
+                for (var ruleIndex = 0; ruleIndex < rules.length; ++ruleIndex) {
+                    var rule = rules[ruleIndex];
+                    if (
+                        rule.media &&
+                        (rule.conditionText === fromText ||
+                            rule.media.mediaText === fromText)
+                    ) {
+                        rule.media.mediaText = toText;
+                    }
                 }
+            } catch (o_O) {
+                console.error(o_O);
+                console.error(sheet);
             }
-        } catch (o_O) {
-            console.error(o_O);
-            console.error(sheet);
         }
     }
-}
 
-function onDarkModeSelected() {
-    swapMediaQueryConditionText('(prefers-color-scheme: dark)', 'only screen');
+    function onDarkModeSelected() {
+        swapMediaQueryConditionText(
+            '(prefers-color-scheme: dark)',
+            'only screen',
+        );
 
-    document.body.classList.add('native');
-    document.querySelectorAll('.darkmode-button__icon').forEach(icon => {
-        icon.style.filter = 'invert(100%)';
+        document.body.classList.add('native');
+        document.querySelectorAll('.darkmode-button__icon').forEach(icon => {
+            icon.style.filter = 'invert(100%)';
+        });
+    }
+
+    function onLightModeSelected() {
+        swapMediaQueryConditionText(
+            'only screen',
+            '(prefers-color-scheme: dark)',
+        );
+
+        document.body.classList.remove('native');
+        document.querySelectorAll('.darkmode-button__icon').forEach(icon => {
+            icon.style.filter = '';
+        });
+    }
+
+    function setCookie(darkmodeEnabled) {
+        var date = new Date();
+        date.setTime(date.getTime() + 24 * 60 * 60 * 1000);
+        document.cookie = `sb1design-darkmode=${darkmodeEnabled}; expires=${date.toGMTString()}; path=/`;
+    }
+
+    let animateCssTransition = () => {
+        document.documentElement.classList.add('transition');
+        window.setTimeout(() => {
+            document.documentElement.classList.remove('transition');
+        }, 1000);
+    };
+
+    function isSafari() {
+        var ua = navigator.userAgent.toLowerCase();
+        if (ua.indexOf('safari') != -1 && ua.indexOf('chrome') != -1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    button.addEventListener('click', function(event) {
+        if (!isDarkModeSupported()) {
+            alert('Sorry! Darkmode is not supported with this browser.');
+            event.preventDefault();
+        }
     });
-}
 
-function onLightModeSelected() {
-    swapMediaQueryConditionText('only screen', '(prefers-color-scheme: dark)');
-
-    document.body.classList.remove('native');
-    document.querySelectorAll('.darkmode-button__icon').forEach(icon => {
-        icon.style.filter = '';
+    checkbox.addEventListener('change', function() {
+        if (this.checked) {
+            darkModeEnabled = true;
+            animateCssTransition();
+            onDarkModeSelected();
+            setCookie(true);
+        } else {
+            darkModeEnabled = false;
+            animateCssTransition();
+            onLightModeSelected();
+            setCookie(false);
+        }
     });
-}
 
-function setCookie(darkmodeEnabled) {
-    var date = new Date();
-    date.setTime(date.getTime() + 24 * 60 * 60 * 1000);
-    document.cookie = `sb1design-darkmode=${darkmodeEnabled}; expires=${date.toGMTString()}; path=/`;
-}
+    document.addEventListener('DOMContentLoaded', function(event) {
+        if (
+            document.cookie.split(';').filter(function(c) {
+                return c.startsWith('sb1design-darkmode=true');
+            }).length > 0
+        ) {
+            checkbox.click();
+        }
+    });
 
-let animateCssTransition = () => {
-    document.documentElement.classList.add('transition');
-    window.setTimeout(() => {
-        document.documentElement.classList.remove('transition');
-    }, 1000);
-};
+    var dmButton = document.querySelector('button.darkmode-button');
 
-function isSafari() {
-    var ua = navigator.userAgent.toLowerCase();
-    if (ua.indexOf('safari') != -1 && ua.indexOf('chrome') != -1) {
-        return true;
+    dmButton.addEventListener('keydown', function(e) {
+        if (e.keyCode === 32 || e.keyCode === 13) {
+            checkbox.click();
+        }
+    });
+
+    var mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function onOsDarkModeSelected() {
+        var darkModeEndabledByOS = window.matchMedia(
+            '(prefers-color-scheme: dark)',
+        ).matches;
+        var labelEl = document.getElementsByClassName(
+            'darkmode-button__label',
+        )[0];
+
+        // disable manual swith if dark mode is enabled OS-wide
+        checkbox.checked = darkModeEndabledByOS;
+        darkModeEndabledByOS
+            ? labelEl.classList.add('darkmode-button__switch--inputDisabled')
+            : labelEl.classList.remove(
+                  'darkmode-button__switch--inputDisabled',
+              );
+        darkModeEndabledByOS
+            ? (checkbox.disabled = true)
+            : (checkbox.disabled = false);
+        darkModeEndabledByOS ? onDarkModeSelected() : onLightModeSelected();
+    }
+
+    if (isSafari) {
+        mediaQueryList.addListener(onOsDarkModeSelected);
     } else {
-        return false;
+        mediaQueryList.addEventListener('change', onOsDarkModeSelected);
     }
-}
-
-button.addEventListener('click', function(event) {
-    if (!isDarkModeSupported()) {
-        alert('Sorry! Darkmode is not supported with this browser.');
-        event.preventDefault();
-    }
-});
-
-checkbox.addEventListener('change', function() {
-    if (this.checked) {
-        darkModeEnabled = true;
-        animateCssTransition();
-        onDarkModeSelected();
-        setCookie(true);
-    } else {
-        darkModeEnabled = false;
-        animateCssTransition();
-        onLightModeSelected();
-        setCookie(false);
-    }
-});
-
-document.addEventListener('DOMContentLoaded', function(event) {
-    if (
-        document.cookie.split(';').filter(function(c) {
-            return c.startsWith('sb1design-darkmode=true');
-        }).length > 0
-    ) {
-        checkbox.click();
-    }
-});
-
-var dmButton = document.querySelector('button.darkmode-button');
-
-dmButton.addEventListener('keydown', function(e) {
-    if (e.keyCode === 32 || e.keyCode === 13) {
-        checkbox.click();
-    }
-});
-
-var mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
-
-function onOsDarkModeSelected() {
-    var darkModeEndabledByOS = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches;
-    var labelEl = document.getElementsByClassName('darkmode-button__label')[0];
-
-    // disable manual swith if dark mode is enabled OS-wide
-    checkbox.checked = darkModeEndabledByOS;
-    darkModeEndabledByOS
-        ? labelEl.classList.add('darkmode-button__switch--inputDisabled')
-        : labelEl.classList.remove('darkmode-button__switch--inputDisabled');
-    darkModeEndabledByOS
-        ? (checkbox.disabled = true)
-        : (checkbox.disabled = false);
-    darkModeEndabledByOS ? onDarkModeSelected() : onLightModeSelected();
-}
-
-if (isSafari) {
-    mediaQueryList.addListener(onOsDarkModeSelected);
-} else {
-    mediaQueryList.addEventListener('change', onOsDarkModeSelected);
-}
+})();
