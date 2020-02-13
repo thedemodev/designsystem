@@ -11,21 +11,24 @@ Loop through all loaded style sheets, and alter the media query condition text t
 Used to change dark mode media query to be applied by changing it from `(prefers-color-scheme: dark)` to `only screen`
  */
 function swapMediaQueryConditionText(fromText, toText) {
-    var sheets, sheetIndex, ruleIndex, sheet, rules, rule;
-
-    sheets = document.styleSheets;
-    for (sheetIndex = 0; sheetIndex < sheets.length; ++sheetIndex) {
-        sheet = sheets[sheetIndex];
-        rules = sheet.cssRules || sheet.rules;
-        for (ruleIndex = 0; ruleIndex < rules.length; ++ruleIndex) {
-            rule = rules[ruleIndex];
-            if (
-                rule.media &&
-                (rule.conditionText === fromText ||
-                    rule.media.mediaText === fromText)
-            ) {
-                rule.media.mediaText = toText;
+    var sheets = document.styleSheets;
+    for (var sheetIndex = 0; sheetIndex < sheets.length; ++sheetIndex) {
+        var sheet = sheets[sheetIndex];
+        try {
+            var rules = sheet.cssRules || sheet.rules;
+            for (var ruleIndex = 0; ruleIndex < rules.length; ++ruleIndex) {
+                var rule = rules[ruleIndex];
+                if (
+                    rule.media &&
+                    (rule.conditionText === fromText ||
+                        rule.media.mediaText === fromText)
+                ) {
+                    rule.media.mediaText = toText;
+                }
             }
+        } catch (o_O) {
+            console.error(o_O);
+            console.error(sheet);
         }
     }
 }
