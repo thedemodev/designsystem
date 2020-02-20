@@ -32,6 +32,10 @@ button.darkmode-button:focus > .darkmode-button-content {
     height: 30px;
 }
 
+.native .darkmode-button__icon {
+    filter: invert(100%);
+}
+
 .darkmode-button__label {
     margin: 0 auto;
     border-radius: 100px;
